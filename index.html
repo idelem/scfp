@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SCFP</title>
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.js"></script>
+<style>
+  :root{
+    --bg:#f2f2f2;
+    --border:#d5d5d5;
+    --text:#222;
+    --muted:#8a8a8a;
+    --accent:#4a7fe8;
+    --accent-contrast:#ffffff;
+    --accent-faint:#4a7fe822;
+    --accent-faint2:#4a7fe814;
+    --shadow:#d8d8d8;
+    --shadow-a:#00000022;
+    --danger:#c0504d;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;height:100%;background:var(--bg);color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+    font-size:13px;}
+  button{font:inherit;cursor:pointer;background:var(--bg);border:1px solid var(--border);
+    border-radius:0;padding:2px 6px;color:var(--text);}
+  button:hover{border-color:var(--accent);color:var(--accent);}
+  button.primary{background:var(--accent);color:var(--accent-contrast);border-color:var(--accent);}
+  input,select,textarea{font:inherit;border:1px solid var(--border);border-radius:0;padding:2px 4px;
+    background:var(--bg);color:var(--text);}
+
+  .no-scrollbar{scrollbar-width:none;-ms-overflow-style:none;}
+  .no-scrollbar::-webkit-scrollbar{display:none;width:0;height:0;}
+
+  /* ---------- top bar ---------- */
+  #topbar{display:flex;align-items:stretch;gap:0;height:32px;padding:0;background:var(--bg);
+    border-bottom:1px solid var(--border);}
+  #topbar .title{display:flex;align-items:center;font-weight:700;letter-spacing:.5px;
+    margin-right:8px;padding:0 10px;}
+  #topbar .nav{display:flex;align-items:stretch;}
+  #topbar .nav button{border-left:1px solid var(--border);border-top:none;border-bottom:none;
+    border-right:none;}
+  #topbar .period-label{display:flex;align-items:center;padding:0 10px;font-weight:600;
+    min-width:110px;justify-content:center;}
+  #topbar .view-switch{display:flex;align-items:stretch;margin-left:auto;}
+  #topbar .view-switch button{border-left:1px solid var(--border);border-top:none;
+    border-bottom:none;border-right:none;font-size:11px;}
+  #topbar .view-switch button.active{background:var(--accent-faint);color:var(--accent);}
+  #topbar button{height:100%;margin:0;border:none;border-left:1px solid var(--border);border-radius:0;
+    padding:0 12px;display:flex;align-items:center;justify-content:center;background:var(--bg);}
+  #topbar button:hover{background:var(--accent-faint2);color:var(--accent);}
+
+  /* ---------- grid (desktop) ---------- */
+  #app{height:calc(100% - 33px);overflow:auto;}
+  #grid{display:grid;min-width:max-content;}
+
+  .col-header{border-bottom:1px solid var(--border);border-right:1px solid var(--border);
+    background:var(--bg);padding:4px 6px;position:sticky;top:0;z-index:2;cursor:grab;}
+  .col-header:active{cursor:grabbing;}
+  .col-header .ch-top{display:flex;align-items:baseline;gap:5px;}
+  .col-header .ch-label{font-weight:700;font-size:13px;min-width:1em;text-align:center;
+    border:none;background:transparent;padding:0;}
+  .col-header .ch-label:focus{outline:none;background:var(--accent-faint);}
+  .col-header .ch-desc{flex:1 1 auto;font-size:10px;color:var(--muted);border:none;
+    background:transparent;padding:0;width:100%;}
+  .col-header .ch-desc:focus{outline:none;color:var(--text);}
+  .col-header .ch-stats{font-size:10px;color:var(--muted);margin-top:2px;display:flex;gap:8px;}
+  .col-header .ch-stats b{color:var(--text);font-weight:600;}
+
+  .row-label{border-bottom:1px solid var(--border);border-right:1px solid var(--border);
+    background:var(--bg);padding:4px 6px;font-size:11px;color:var(--muted);position:sticky;
+    left:0;z-index:1;display:flex;align-items:center;justify-content:space-between;}
+  .row-label.today{background:var(--accent-faint);color:var(--accent);font-weight:700;}
+  .row-label .row-total{font-weight:700;color:var(--text);}
+  .row-label.today .row-total{color:var(--accent);}
+
+  .corner{border-bottom:1px solid var(--border);border-right:1px solid var(--border);
+    background:var(--bg);position:sticky;left:0;top:0;z-index:3;}
+
+  .cell{border-bottom:1px solid var(--border);border-right:1px solid var(--border);
+    padding:2px 4px;min-height:34px;display:flex;flex-direction:column;gap:2px;cursor:text;}
+  .cell:hover{background:var(--accent-faint2);}
+  .row-label.today ~ .cell, .cell.today{background:var(--accent-faint);}
+
+  .entry{display:flex;align-items:flex-start;gap:4px;font-size:11px;line-height:1.35;
+    padding:1px 2px;border-radius:2px;}
+  .entry:hover{background:var(--accent-faint2);}
+  .entry .cf{flex:0 0 auto;color:var(--muted);font-variant-numeric:tabular-nums;}
+  .entry .cf b{color:var(--accent);}
+  .entry .etext{flex:1 1 auto;word-break:break-word;}
+  .entry .etext .pill{background:var(--accent-faint);color:var(--accent);padding:0 3px;
+    border-radius:2px;}
+  .entry .ph{flex:0 0 auto;color:var(--muted);font-size:10px;}
+
+  /* inline create / edit */
+  .entry-edit{display:flex;flex-direction:column;gap:2px;background:var(--bg);
+    border:1px solid var(--accent);padding:3px;}
+  .entry-edit .num-row{display:flex;gap:4px;align-items:center;font-size:10px;color:var(--muted);}
+  .entry-edit input[type=number]{width:32px;text-align:center;padding:1px;}
+  .entry-edit textarea{width:100%;resize:none;min-height:2.4em;line-height:1.4;border:none;
+    border-top:1px solid var(--border);padding:2px 0 0;background:transparent;}
+  .entry-edit textarea:focus{outline:none;}
+
+  .mention-menu{position:fixed;background:var(--bg);border:1px solid var(--border);
+    box-shadow:0 4px 16px var(--shadow-a);z-index:1000;min-width:140px;max-height:200px;
+    overflow-y:auto;}
+  .mention-menu .mi{padding:4px 8px;font-size:12px;cursor:pointer;}
+  .mention-menu .mi:hover,.mention-menu .mi.active{background:var(--accent-faint);}
+
+  /* ---------- mobile ---------- */
+  #mobilelist{display:none;padding:0;}
+  #mobilelist .day-group{border-bottom:1px solid var(--border);}
+  #mobilelist .day-head{padding:6px 10px;font-size:11px;color:var(--muted);
+    background:var(--shadow);display:flex;justify-content:space-between;position:sticky;top:0;}
+  #mobilelist .day-head b{color:var(--text);}
+  #mobilelist .entry{font-size:13px;padding:6px 10px;border-bottom:1px solid var(--border);
+    display:flex;gap:8px;}
+  #mobilelist .entry .cf{flex:0 0 auto;color:var(--muted);}
+  #mobilelist .entry .etext{flex:1 1 auto;}
+  #mobilelist .sort-bar{display:flex;border-bottom:1px solid var(--border);}
+  #mobilelist .sort-bar button{flex:1 1 0;border:none;border-left:1px solid var(--border);
+    border-radius:0;font-size:11px;padding:6px 0;}
+  #mobilelist .sort-bar button:first-child{border-left:none;}
+  #mobilelist .sort-bar button.active{background:var(--accent-faint);color:var(--accent);}
+
+  body.is-mobile #grid{display:none;}
+  body.is-mobile #mobilelist{display:block;}
+  body.is-mobile input,body.is-mobile select,body.is-mobile textarea{font-size:16px !important;}
+  body.is-mobile #topbar .view-switch{display:none;}
+</style>
+</head>
+<body>
+
+<div id="topbar">
+  <div class="title">SCFP</div>
+  <div class="nav">
+    <button id="btnPrev">‹</button>
+    <div class="period-label" id="periodLabel"></div>
+    <button id="btnNext">›</button>
+  </div>
+  <div class="view-switch" id="viewSwitch"></div>
+  <button id="btnSettings">⚙</button>
+</div>
+
+<div id="app">
+  <div id="grid"></div>
+  <div id="mobilelist" class="no-scrollbar"></div>
+</div>
+
+<script>
+/* =========================================================
+   状态 & 存储
+========================================================= */
+const STORAGE_KEY = 'scfp_data_v1';
+
+function defaultData(){
+  const cols = {};
+  const order = [];
+  const defaultDesc = ['Life & meta','Tooling/code','Journaling & analog','Study','—',
+                        'Fiction','Game/VN dev','Visual','Audio','—'];
+  for(let i=0;i<10;i++){
+    const id = 'c'+i;
+    cols[id] = { label:String(i), description:defaultDesc[i]||'' };
+    order.push(id);
+  }
+  return {
+    meta:{ version:1, columnOrder:order },
+    columns:cols,
+    projects:{},
+    days:{}
+  };
+}
+
+function loadData(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(raw) return JSON.parse(raw);
+  }catch(e){ console.error('load failed', e); }
+  return defaultData();
+}
+
+function saveData(){
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(STATE.data));
+}
+
+const STATE = {
+  data: loadData(),
+  view: 'month',          // week | biweek | month | quarter | year
+  anchor: todayKey(),      // 当前周期内任意一天，用来算周期范围
+  mobileSort: 'time',      // time | sector | ph
+};
+
+/* =========================================================
+   日期工具
+========================================================= */
+function pad2(n){ return String(n).padStart(2,'0'); }
+function keyFromDate(d){ return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`; }
+function dateFromKey(key){ const [y,m,d]=key.split('-').map(Number); return new Date(y,(m||1)-1,d||1); }
+function todayKey(){ return keyFromDate(new Date()); }
+function addDays(key,n){ const d=dateFromKey(key); d.setDate(d.getDate()+n); return keyFromDate(d); }
+function addMonths(key,n){
+  const d = dateFromKey(key); d.setDate(1); d.setMonth(d.getMonth()+n); return keyFromDate(d);
+}
+function daysInMonth(y,m){ return new Date(y,m,0).getDate(); }
+
+// 返回 {start, end, label} 当前周期的日期范围（含端点），基于 STATE.view / STATE.anchor
+function periodRange(){
+  const d = dateFromKey(STATE.anchor);
+  if(STATE.view==='week' || STATE.view==='biweek'){
+    const day = d.getDay();
+    const start = new Date(d); start.setDate(d.getDate()-day);
+    const len = STATE.view==='week' ? 7 : 14;
+    const end = new Date(start); end.setDate(start.getDate()+len-1);
+    return { start:keyFromDate(start), end:keyFromDate(end),
+      label:`${keyFromDate(start)} ~ ${keyFromDate(end)}` };
+  }
+  if(STATE.view==='month'){
+    const y=d.getFullYear(), m=d.getMonth();
+    const start = new Date(y,m,1), end = new Date(y,m,daysInMonth(y,m+1));
+    return { start:keyFromDate(start), end:keyFromDate(end),
+      label: `${y}-${pad2(m+1)}` };
+  }
+  if(STATE.view==='quarter'){
+    const y=d.getFullYear(), q=Math.floor(d.getMonth()/3);
+    const start = new Date(y,q*3,1), end = new Date(y,q*3+3,0);
+    return { start:keyFromDate(start), end:keyFromDate(end), label:`${y} Q${q+1}` };
+  }
+  // year
+  const y=d.getFullYear();
+  const start=new Date(y,0,1), end=new Date(y,11,31);
+  return { start:keyFromDate(start), end:keyFromDate(end), label:String(y) };
+}
+
+function stepPeriod(dir){
+  if(STATE.view==='week'){ STATE.anchor = addDays(STATE.anchor, 7*dir); }
+  else if(STATE.view==='biweek'){ STATE.anchor = addDays(STATE.anchor, 14*dir); }
+  else if(STATE.view==='month'){ STATE.anchor = addMonths(STATE.anchor, dir); }
+  else if(STATE.view==='quarter'){ STATE.anchor = addMonths(STATE.anchor, 3*dir); }
+  else { STATE.anchor = addMonths(STATE.anchor, 12*dir); }
+  render();
+}
+
+function allDaysInRange(start,end){
+  const out=[]; let k=start;
+  while(k<=end){ out.push(k); k=addDays(k,1); if(out.length>400) break; }
+  return out;
+}
+
+/* =========================================================
+   Ph 计算
+========================================================= */
+function calcPh(ch,fh){ return fh>0 ? ch/fh : 0; }
+
+/* =========================================================
+   数据操作：entry / project
+========================================================= */
+function newId(prefix){ return prefix+'_'+Math.random().toString(36).slice(2,9); }
+
+function getDay(key, create){
+  if(!STATE.data.days[key]){
+    if(!create) return null;
+    STATE.data.days[key] = { entries:[] };
+  }
+  return STATE.data.days[key];
+}
+
+// 从文本里解析出 [[project]] 名字集合
+function extractProjectNames(text){
+  const set = new Set();
+  const re = /\[\[(.+?)\]\]/g; let m;
+  while((m=re.exec(text))) { const n=m[1].trim(); if(n) set.add(n); }
+  return set;
+}
+
+function findProjectByName(name){
+  return Object.entries(STATE.data.projects).find(([id,p])=>p.name===name);
+}
+
+function ensureProject(name){
+  const found = findProjectByName(name);
+  if(found) return found[0];
+  const id = newId('p');
+  STATE.data.projects[id] = { name, entryIds:[] };
+  return id;
+}
+
+function linkEntryToProjects(dayKey, entryId, text){
+  const names = extractProjectNames(text);
+  const wantIds = new Set([...names].map(ensureProject));
+  for(const [pid,proj] of Object.entries(STATE.data.projects)){
+    const has = proj.entryIds.includes(entryId);
+    const want = wantIds.has(pid);
+    if(want && !has) proj.entryIds.push(entryId);
+    if(!want && has) proj.entryIds = proj.entryIds.filter(id=>id!==entryId);
+  }
+}
+
+function renderTextWithPills(text){
+  const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  return esc(text).replace(/\[\[(.+?)\]\]/g,
+    (m,name)=>`<span class="pill">${esc(name)}</span>`);
+}
+
+function addEntry(dayKey, columnId){
+  const day = getDay(dayKey, true);
+  const entry = {
+    id:newId('e'), columnId, ch:0, fh:1, ph:0, text:'',
+    createdAt:new Date().toISOString(), updatedAt:new Date().toISOString()
+  };
+  day.entries.push(entry);
+  return entry;
+}
+
+function updateEntry(dayKey, entryId, {ch,fh,text}){
+  const day = getDay(dayKey); if(!day) return;
+  const entry = day.entries.find(e=>e.id===entryId); if(!entry) return;
+  if(ch!==undefined) entry.ch = ch;
+  if(fh!==undefined) entry.fh = fh;
+  if(text!==undefined) entry.text = text;
+  entry.ph = calcPh(entry.ch, entry.fh);
+  entry.updatedAt = new Date().toISOString();
+  linkEntryToProjects(dayKey, entryId, entry.text);
+  saveData();
+}
+
+function deleteEntry(dayKey, entryId){
+  const day = getDay(dayKey); if(!day) return;
+  day.entries = day.entries.filter(e=>e.id!==entryId);
+  for(const proj of Object.values(STATE.data.projects)){
+    proj.entryIds = proj.entryIds.filter(id=>id!==entryId);
+  }
+  saveData();
+}
+
+/* =========================================================
+   渲染：topbar
+========================================================= */
+const VIEWS = [
+  ['week','周'],['biweek','双周'],['month','月'],['quarter','季'],['year','年']
+];
+
+function renderTopbar(){
+  document.getElementById('periodLabel').textContent = periodRange().label;
+  const vs = document.getElementById('viewSwitch');
+  vs.innerHTML = '';
+  VIEWS.forEach(([id,label])=>{
+    const b = document.createElement('button');
+    b.textContent = label;
+    if(STATE.view===id) b.classList.add('active');
+    b.onclick = ()=>{ STATE.view=id; render(); };
+    vs.appendChild(b);
+  });
+}
+
+/* =========================================================
+   渲染：桌面 grid
+========================================================= */
+function columnStats(columnId, days){
+  let sum=0, n=0;
+  for(const dKey of days){
+    const day = STATE.data.days[dKey]; if(!day) continue;
+    for(const e of day.entries){
+      if(e.columnId===columnId){ sum+=e.ph; n++; }
+    }
+  }
+  return { sum, avg: n? sum/n : 0 };
+}
+
+function dayTotal(dKey){
+  const day = STATE.data.days[dKey]; if(!day) return 0;
+  return day.entries.reduce((s,e)=>s+e.ph,0);
+}
+
+function renderGrid(){
+  const grid = document.getElementById('grid');
+  const {start,end} = periodRange();
+  const days = allDaysInRange(start,end);
+  const order = STATE.data.meta.columnOrder;
+  const today = todayKey();
+
+  grid.style.gridTemplateColumns = `70px repeat(${order.length}, minmax(140px,1fr)) 56px`;
+  grid.innerHTML = '';
+
+  // corner
+  const corner = document.createElement('div');
+  corner.className='corner';
+  grid.appendChild(corner);
+
+  // column headers
+  order.forEach(colId=>{
+    const col = STATE.data.columns[colId];
+    const stats = columnStats(colId, days);
+    const h = document.createElement('div');
+    h.className='col-header';
+    h.dataset.colId = colId;
+    h.innerHTML = `
+      <div class="ch-top">
+        <input class="ch-label" value="${col.label}" maxlength="2">
+        <input class="ch-desc" value="${col.description}">
+      </div>
+      <div class="ch-stats"><span>Σ <b>${stats.sum.toFixed(2)}</b></span><span>x̄ <b>${stats.avg.toFixed(2)}</b></span></div>`;
+    h.querySelector('.ch-label').onchange = e=>{ col.label=e.target.value; saveData(); };
+    h.querySelector('.ch-desc').onchange = e=>{ col.description=e.target.value; saveData(); };
+    grid.appendChild(h);
+  });
+
+  const totalHeader = document.createElement('div');
+  totalHeader.className='col-header';
+  totalHeader.innerHTML = `<div class="ch-top"><span class="ch-label">Ph</span></div>`;
+  grid.appendChild(totalHeader);
+
+  // rows
+  days.forEach(dKey=>{
+    const isToday = dKey===today;
+    const rl = document.createElement('div');
+    rl.className='row-label'+(isToday?' today':'');
+    rl.innerHTML = `<span>${dKey.slice(5)}</span><span class="row-total">${dayTotal(dKey).toFixed(1)}</span>`;
+    grid.appendChild(rl);
+
+    order.forEach(colId=>{
+      grid.appendChild(renderCell(dKey, colId, isToday));
+    });
+
+    const totalCell = document.createElement('div');
+    totalCell.className='cell'+(isToday?' today':'');
+    totalCell.style.alignItems='center';
+    totalCell.style.justifyContent='center';
+    totalCell.textContent = dayTotal(dKey).toFixed(2);
+    grid.appendChild(totalCell);
+  });
+
+  // 列拖动排序
+  if(window.Sortable && !grid.dataset.sortableInit){
+    grid.dataset.sortableInit='1';
+    // 用一个隐藏的辅助行模拟 header 排序（简化版：直接监听 col-header 的 dragstart/drop）
+  }
+  enableColumnDrag();
+}
+
+function enableColumnDrag(){
+  const headers = [...document.querySelectorAll('.col-header')];
+  let dragged=null;
+  headers.forEach(h=>{
+    h.draggable = true;
+    h.ondragstart = ()=>{ dragged=h.dataset.colId; };
+    h.ondragover = e=>e.preventDefault();
+    h.ondrop = ()=>{
+      const target = h.dataset.colId;
+      if(!dragged || dragged===target) return;
+      const order = STATE.data.meta.columnOrder;
+      const from = order.indexOf(dragged), to = order.indexOf(target);
+      order.splice(from,1); order.splice(to,0,dragged);
+      saveData(); render();
+    };
+  });
+}
+
+function renderCell(dKey, colId, isToday){
+  const cell = document.createElement('div');
+  cell.className='cell'+(isToday?' today':'');
+  const day = STATE.data.days[dKey];
+  const entries = day ? day.entries.filter(e=>e.columnId===colId) : [];
+
+  entries.forEach(entry=>{
+    cell.appendChild(renderEntryView(dKey, entry));
+  });
+
+  const addBtn = document.createElement('div');
+  addBtn.style.flex='1 1 auto'; addBtn.style.minHeight='10px';
+  addBtn.onclick = ()=>{
+    const entry = addEntry(dKey, colId);
+    saveData();
+    renderGrid();
+    // 立刻进入编辑态
+    requestAnimationFrame(()=>{
+      const el = document.querySelector(`[data-entry-id="${entry.id}"]`);
+      if(el) el.querySelector('.entry-edit-trigger')?.click();
+    });
+  };
+  cell.appendChild(addBtn);
+  return cell;
+}
+
+function renderEntryView(dKey, entry){
+  const wrap = document.createElement('div');
+  wrap.dataset.entryId = entry.id;
+
+  function showView(){
+    wrap.innerHTML = `
+      <div class="entry entry-edit-trigger">
+        <span class="cf"><b>${entry.ch}</b>/${entry.fh}</span>
+        <span class="etext">${renderTextWithPills(entry.text||'(空)')}</span>
+        <span class="ph">${entry.ph.toFixed(2)}</span>
+      </div>`;
+    wrap.querySelector('.entry').onclick = showEdit;
+  }
+
+  function showEdit(){
+    wrap.innerHTML = `
+      <div class="entry-edit">
+        <div class="num-row">
+          Ch <input type="number" class="in-ch" min="0" max="9" value="${entry.ch}">
+          Fh <input type="number" class="in-fh" min="1" max="9" value="${entry.fh}">
+          <button class="del-btn" style="margin-left:auto;">✕</button>
+        </div>
+        <textarea class="in-text" placeholder="做了什么…支持 [[project]]">${entry.text||''}</textarea>
+      </div>`;
+    const ta = wrap.querySelector('.in-text');
+    const chIn = wrap.querySelector('.in-ch');
+    const fhIn = wrap.querySelector('.in-fh');
+
+    function commit(){
+      const ch = Math.max(0,Math.min(9, Number(chIn.value)||0));
+      const fh = Math.max(1,Math.min(9, Number(fhIn.value)||1));
+      updateEntry(dKey, entry.id, {ch, fh, text: ta.value});
+      Object.assign(entry, STATE.data.days[dKey].entries.find(e=>e.id===entry.id));
+      showView();
+      renderTopbar(); // 刷新列 sum/avg（简化：整表重渲染更彻底，见下方 blur 里调用）
+    }
+    ta.addEventListener('blur', ()=>{ commit(); renderGrid(); });
+    chIn.addEventListener('change', ()=>{ commit(); renderGrid(); });
+    fhIn.addEventListener('change', ()=>{ commit(); renderGrid(); });
+    wrap.querySelector('.del-btn').onclick = ()=>{ deleteEntry(dKey, entry.id); renderGrid(); };
+    ta.focus();
+  }
+
+  showView();
+  return wrap;
+}
+
+/* =========================================================
+   渲染：移动端线性列表
+========================================================= */
+function renderMobileList(){
+  const el = document.getElementById('mobilelist');
+  const {start,end} = periodRange();
+  const days = allDaysInRange(start,end);
+
+  let allEntries = [];
+  days.forEach(dKey=>{
+    const day = STATE.data.days[dKey];
+    if(!day) return;
+    day.entries.forEach(e=>allEntries.push({...e, dKey}));
+  });
+
+  if(STATE.mobileSort==='sector'){
+    const order = STATE.data.meta.columnOrder;
+    allEntries.sort((a,b)=> order.indexOf(a.columnId)-order.indexOf(b.columnId));
+  } else if(STATE.mobileSort==='ph'){
+    allEntries.sort((a,b)=> b.ph-a.ph);
+  } else {
+    allEntries.sort((a,b)=> a.dKey.localeCompare(b.dKey) || a.createdAt.localeCompare(b.createdAt));
+  }
+
+  let html = `<div class="sort-bar">
+    <button data-s="time" class="${STATE.mobileSort==='time'?'active':''}">时间</button>
+    <button data-s="sector" class="${STATE.mobileSort==='sector'?'active':''}">Sector</button>
+    <button data-s="ph" class="${STATE.mobileSort==='ph'?'active':''}">Ph</button>
+  </div>`;
+
+  let lastDay=null;
+  allEntries.forEach(e=>{
+    if(e.dKey!==lastDay){
+      lastDay=e.dKey;
+      html += `<div class="day-head"><span>${e.dKey}</span><b>${dayTotal(e.dKey).toFixed(2)}</b></div>`;
+    }
+    const col = STATE.data.columns[e.columnId];
+    html += `<div class="entry">
+      <span class="cf">${col.label} ${e.ch}/${e.fh}</span>
+      <span class="etext">${renderTextWithPills(e.text||'')}</span>
+    </div>`;
+  });
+
+  el.innerHTML = html;
+  el.querySelectorAll('.sort-bar button').forEach(b=>{
+    b.onclick = ()=>{ STATE.mobileSort=b.dataset.s; renderMobileList(); };
+  });
+}
+
+/* =========================================================
+   移动端检测
+========================================================= */
+function detectMobile(){
+  const isMobile = window.matchMedia('(max-width: 700px)').matches;
+  document.body.classList.toggle('is-mobile', isMobile);
+}
+
+/* =========================================================
+   总渲染入口
+========================================================= */
+function render(){
+  detectMobile();
+  renderTopbar();
+  renderGrid();
+  renderMobileList();
+}
+
+document.getElementById('btnPrev').onclick = ()=>stepPeriod(-1);
+document.getElementById('btnNext').onclick = ()=>stepPeriod(1);
+window.addEventListener('resize', render);
+
+render();
+</script>
+</body>
+</html>
