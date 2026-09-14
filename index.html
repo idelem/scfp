@@ -30,6 +30,18 @@
   button.primary{background:var(--accent);color:var(--accent-contrast);border-color:var(--accent);}
   input,select,textarea{font:inherit;border:1px solid var(--border);border-radius:0;padding:2px 4px;
     background:var(--bg);color:var(--text);}
+  input,select,textarea,button{font-size:13px;}
+  body.is-mobile input,body.is-mobile select,body.is-mobile textarea{font-size:16px !important;}
+
+  /* ---------- modal ---------- */
+  .modal-mask{position:fixed;inset:0;background:rgba(0,0,0,.25);display:flex;align-items:center;
+    justify-content:center;z-index:2000;}
+  .modal{background:var(--bg);border:1px solid var(--border);padding:16px;min-width:280px;
+    max-width:90vw;box-shadow:0 10px 40px var(--shadow-a);}
+  .modal h3{margin:0 0 12px;font-size:14px;}
+  .modal .row{display:flex;flex-direction:column;gap:6px;margin-bottom:8px;}
+  .modal .row button{width:100%;}
+  .modal .actions{display:flex;justify-content:flex-end;gap:8px;margin-top:12px;}
 
   .no-scrollbar{scrollbar-width:none;-ms-overflow-style:none;}
   .no-scrollbar::-webkit-scrollbar{display:none;width:0;height:0;}
@@ -53,11 +65,12 @@
   #topbar button:hover{background:var(--accent-faint2);color:var(--accent);}
 
   /* ---------- grid (desktop) ---------- */
-  #app{height:calc(100% - 33px);overflow:auto;}
-  #grid{display:grid;min-width:max-content;}
+  #app{height:calc(100% - 33px);overflow-y:auto;overflow-x:hidden;display:flex;flex-direction:column;}
+  #grid{display:grid;width:100%;flex:1 1 auto;min-height:0;}
 
   .col-header{border-bottom:1px solid var(--border);border-right:1px solid var(--border);
-    background:var(--bg);padding:4px 6px;position:sticky;top:0;z-index:2;cursor:grab;}
+    background:var(--bg);padding:4px 6px;position:sticky;top:0;z-index:2;cursor:grab;
+    overflow:hidden;}
   .col-header:active{cursor:grabbing;}
   .col-header .ch-top{display:flex;align-items:baseline;gap:5px;}
   .col-header .ch-label{font-weight:700;font-size:13px;min-width:1em;text-align:center;
@@ -70,38 +83,46 @@
   .col-header .ch-stats b{color:var(--text);font-weight:600;}
 
   .row-label{border-bottom:1px solid var(--border);border-right:1px solid var(--border);
-    background:var(--bg);padding:4px 6px;font-size:11px;color:var(--muted);position:sticky;
-    left:0;z-index:1;display:flex;align-items:center;justify-content:space-between;}
+    background:var(--bg);padding:3px 6px;font-size:10px;color:var(--muted);position:sticky;
+    left:0;z-index:1;display:flex;flex-direction:column;justify-content:center;gap:1px;
+    overflow:hidden;}
   .row-label.today{background:var(--accent-faint);color:var(--accent);font-weight:700;}
-  .row-label .row-total{font-weight:700;color:var(--text);}
+  .row-label .row-total{font-weight:700;color:var(--text);font-size:12px;}
   .row-label.today .row-total{color:var(--accent);}
 
   .corner{border-bottom:1px solid var(--border);border-right:1px solid var(--border);
     background:var(--bg);position:sticky;left:0;top:0;z-index:3;}
 
+  .col-header,.row-label,.corner,.cell{min-width:0;}
   .cell{border-bottom:1px solid var(--border);border-right:1px solid var(--border);
-    padding:2px 4px;min-height:34px;display:flex;flex-direction:column;gap:2px;cursor:text;}
+    padding:2px 4px;min-height:34px;display:flex;flex-direction:column;gap:2px;cursor:text;
+    overflow:hidden;}
   .cell:hover{background:var(--accent-faint2);}
-  .row-label.today ~ .cell, .cell.today{background:var(--accent-faint);}
+  .cell.today{background:var(--accent-faint);}
 
-  .entry{display:flex;align-items:flex-start;gap:4px;font-size:11px;line-height:1.35;
-    padding:1px 2px;border-radius:2px;}
-  .entry:hover{background:var(--accent-faint2);}
-  .entry .cf{flex:0 0 auto;color:var(--muted);font-variant-numeric:tabular-nums;}
-  .entry .cf b{color:var(--accent);}
-  .entry .etext{flex:1 1 auto;word-break:break-word;}
-  .entry .etext .pill{background:var(--accent-faint);color:var(--accent);padding:0 3px;
-    border-radius:2px;}
-  .entry .ph{flex:0 0 auto;color:var(--muted);font-size:10px;}
-
-  /* inline create / edit */
-  .entry-edit{display:flex;flex-direction:column;gap:2px;background:var(--bg);
-    border:1px solid var(--accent);padding:3px;}
-  .entry-edit .num-row{display:flex;gap:4px;align-items:center;font-size:10px;color:var(--muted);}
-  .entry-edit input[type=number]{width:32px;text-align:center;padding:1px;}
-  .entry-edit textarea{width:100%;resize:none;min-height:2.4em;line-height:1.4;border:none;
-    border-top:1px solid var(--border);padding:2px 0 0;background:transparent;}
-  .entry-edit textarea:focus{outline:none;}
+  .entry{display:flex;align-items:flex-start;gap:4px;line-height:1.35;
+    padding:2px;border:1px solid transparent;}
+  .entry:hover,.entry:focus-within{border-color:var(--border);background:var(--accent-faint2);}
+  .entry:focus-within{border-color:var(--accent);}
+  .entry .cf{flex:0 0 auto;color:var(--muted);display:flex;align-items:center;gap:1px;
+    padding-top:2px;}
+  .entry .cf input[type=number]{width:2.1em;text-align:center;padding:1px;border:none;
+    background:transparent;-moz-appearance:textfield;}
+  .entry .cf input[type=number]:focus{outline:none;background:var(--accent-faint);}
+  .entry .cf input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
+  .entry .text-slot{flex:1 1 auto;min-width:0;}
+  .entry .text-display{cursor:text;word-break:break-word;padding:2px 0;line-height:1.35;
+    min-height:1.6em;}
+  .entry .text-display .placeholder{color:var(--muted);}
+  .entry textarea.in-text{width:100%;word-break:break-word;border:none;background:transparent;
+    resize:none;padding:2px 0;line-height:1.35;min-height:1.6em;overflow:hidden;}
+  .entry textarea.in-text:focus{outline:none;}
+  .pill{background:var(--accent-faint);color:var(--accent);padding:0 3px;border-radius:2px;}
+  .entry .ph{flex:0 0 auto;color:var(--muted);font-size:10px;padding-top:3px;}
+  .entry .del-btn{flex:0 0 auto;border:none;background:none;color:var(--muted);opacity:0;
+    padding:0 2px;}
+  .entry:hover .del-btn,.entry:focus-within .del-btn{opacity:.6;}
+  .entry .del-btn:hover{opacity:1;color:var(--danger);}
 
   .mention-menu{position:fixed;background:var(--bg);border:1px solid var(--border);
     box-shadow:0 4px 16px var(--shadow-a);z-index:1000;min-width:140px;max-height:200px;
@@ -148,6 +169,7 @@
   <div id="grid"></div>
   <div id="mobilelist" class="no-scrollbar"></div>
 </div>
+<div id="modalRoot"></div>
 
 <script>
 /* =========================================================
@@ -380,7 +402,8 @@ function renderGrid(){
   const order = STATE.data.meta.columnOrder;
   const today = todayKey();
 
-  grid.style.gridTemplateColumns = `70px repeat(${order.length}, minmax(140px,1fr)) 56px`;
+  grid.style.gridTemplateColumns = `56px repeat(${order.length}, 1fr) 46px`;
+  grid.style.gridTemplateRows = `auto repeat(${days.length}, minmax(34px, 1fr))`;
   grid.innerHTML = '';
 
   // corner
@@ -416,6 +439,7 @@ function renderGrid(){
     const isToday = dKey===today;
     const rl = document.createElement('div');
     rl.className='row-label'+(isToday?' today':'');
+    rl.dataset.dayKey = dKey;
     rl.innerHTML = `<span>${dKey.slice(5)}</span><span class="row-total">${dayTotal(dKey).toFixed(1)}</span>`;
     grid.appendChild(rl);
 
@@ -424,7 +448,8 @@ function renderGrid(){
     });
 
     const totalCell = document.createElement('div');
-    totalCell.className='cell'+(isToday?' today':'');
+    totalCell.className='cell total-cell'+(isToday?' today':'');
+    totalCell.dataset.dayKey = dKey;
     totalCell.style.alignItems='center';
     totalCell.style.justifyContent='center';
     totalCell.textContent = dayTotal(dKey).toFixed(2);
@@ -464,7 +489,7 @@ function renderCell(dKey, colId, isToday){
   const entries = day ? day.entries.filter(e=>e.columnId===colId) : [];
 
   entries.forEach(entry=>{
-    cell.appendChild(renderEntryView(dKey, entry));
+    cell.appendChild(renderEntryView(dKey, entry, false));
   });
 
   const addBtn = document.createElement('div');
@@ -472,62 +497,115 @@ function renderCell(dKey, colId, isToday){
   addBtn.onclick = ()=>{
     const entry = addEntry(dKey, colId);
     saveData();
-    renderGrid();
-    // 立刻进入编辑态
-    requestAnimationFrame(()=>{
-      const el = document.querySelector(`[data-entry-id="${entry.id}"]`);
-      if(el) el.querySelector('.entry-edit-trigger')?.click();
-    });
+    const el = renderEntryView(dKey, entry, true);
+    cell.insertBefore(el, addBtn);
   };
   cell.appendChild(addBtn);
   return cell;
 }
 
-function renderEntryView(dKey, entry){
+// 单个 entry 永远只有一套 DOM 结构（ch/fh/text 输入框都在），
+// 靠 CSS 区分"看起来像纯展示"还是"看起来像在编辑"，
+// 这样在 ch/fh/text 之间切换焦点不会触发任何重新渲染或 blur-exit，
+// 真正做到无缝 in place editing。只有当焦点彻底离开这个 entry 时，
+// 才刷新整表的 sum/avg/合计（这些数字轻量地单独刷新，不重建 DOM）。
+function autoGrow(ta){
+  ta.style.height = 'auto';
+  ta.style.height = ta.scrollHeight + 'px';
+}
+
+function renderEntryView(dKey, entry, startEditing){
   const wrap = document.createElement('div');
+  wrap.className = 'entry';
   wrap.dataset.entryId = entry.id;
+  wrap.innerHTML = `
+    <span class="cf">
+      <input type="number" class="in-ch" min="0" max="9" value="${entry.ch}">/<input type="number" class="in-fh" min="1" max="9" value="${entry.fh}">
+    </span>
+    <span class="text-slot"></span>
+    <span class="ph">${entry.ph.toFixed(2)}</span>
+    <button class="del-btn" title="删除">✕</button>
+  `;
+  const chIn = wrap.querySelector('.in-ch');
+  const fhIn = wrap.querySelector('.in-fh');
+  const phEl = wrap.querySelector('.ph');
+  const delBtn = wrap.querySelector('.del-btn');
+  const textSlot = wrap.querySelector('.text-slot');
 
-  function showView(){
-    wrap.innerHTML = `
-      <div class="entry entry-edit-trigger">
-        <span class="cf"><b>${entry.ch}</b>/${entry.fh}</span>
-        <span class="etext">${renderTextWithPills(entry.text||'(空)')}</span>
-        <span class="ph">${entry.ph.toFixed(2)}</span>
-      </div>`;
-    wrap.querySelector('.entry').onclick = showEdit;
+  // ch/fh 是永远存在的 input，切换焦点、打字都不会触发任何 DOM 重建，
+  // 只是即时提交数值、原地更新 ph 显示。
+  function commitNums(){
+    const ch = Math.max(0,Math.min(9, Number(chIn.value)||0));
+    const fh = Math.max(1,Math.min(9, Number(fhIn.value)||1));
+    updateEntry(dKey, entry.id, {ch, fh});
+    const fresh = STATE.data.days[dKey].entries.find(e=>e.id===entry.id);
+    if(fresh){ entry.ch=fresh.ch; entry.fh=fresh.fh; entry.ph=fresh.ph; }
+    phEl.textContent = entry.ph.toFixed(2);
   }
+  chIn.addEventListener('input', commitNums);
+  fhIn.addEventListener('input', commitNums);
 
-  function showEdit(){
-    wrap.innerHTML = `
-      <div class="entry-edit">
-        <div class="num-row">
-          Ch <input type="number" class="in-ch" min="0" max="9" value="${entry.ch}">
-          Fh <input type="number" class="in-fh" min="1" max="9" value="${entry.fh}">
-          <button class="del-btn" style="margin-left:auto;">✕</button>
-        </div>
-        <textarea class="in-text" placeholder="做了什么…支持 [[project]]">${entry.text||''}</textarea>
-      </div>`;
-    const ta = wrap.querySelector('.in-text');
-    const chIn = wrap.querySelector('.in-ch');
-    const fhIn = wrap.querySelector('.in-fh');
-
-    function commit(){
-      const ch = Math.max(0,Math.min(9, Number(chIn.value)||0));
-      const fh = Math.max(1,Math.min(9, Number(fhIn.value)||1));
-      updateEntry(dKey, entry.id, {ch, fh, text: ta.value});
-      Object.assign(entry, STATE.data.days[dKey].entries.find(e=>e.id===entry.id));
-      showView();
-      renderTopbar(); // 刷新列 sum/avg（简化：整表重渲染更彻底，见下方 blur 里调用）
-    }
-    ta.addEventListener('blur', ()=>{ commit(); renderGrid(); });
-    chIn.addEventListener('change', ()=>{ commit(); renderGrid(); });
-    fhIn.addEventListener('change', ()=>{ commit(); renderGrid(); });
-    wrap.querySelector('.del-btn').onclick = ()=>{ deleteEntry(dKey, entry.id); renderGrid(); };
+  // text 部分单独在"textarea 原文"与"渲染后的只读 pill 视图"之间切换，
+  // 只影响 text-slot 这一小块 DOM，不影响 ch/fh 的编辑状态。
+  function showTextView(){
+    const html = entry.text
+      ? renderTextWithPills(entry.text)
+      : `<span class="placeholder">点击填写…支持 [[project]]</span>`;
+    textSlot.innerHTML = `<div class="text-display">${html}</div>`;
+    textSlot.querySelector('.text-display').onclick = showTextEdit;
+  }
+  function showTextEdit(){
+    textSlot.innerHTML = `<textarea class="in-text" rows="1" placeholder="做了什么…支持 [[project]]"></textarea>`;
+    const ta = textSlot.querySelector('.in-text');
+    ta.value = entry.text || '';
+    autoGrow(ta);
+    ta.addEventListener('input', ()=>{
+      updateEntry(dKey, entry.id, {text: ta.value});
+      const fresh = STATE.data.days[dKey].entries.find(e=>e.id===entry.id);
+      if(fresh){ entry.text=fresh.text; entry.ph=fresh.ph; }
+      phEl.textContent = entry.ph.toFixed(2);
+      autoGrow(ta);
+    });
+    ta.addEventListener('blur', showTextView);
     ta.focus();
   }
 
-  showView();
+  delBtn.onclick = ()=>{ deleteEntry(dKey, entry.id); renderGrid(); };
+
+  // 焦点真正离开整个 entry（不是在 ch / fh / text 之间切换）时，
+  // 才刷新列头 sum/avg 和行总计——避免每次按键都重排整张表。
+  wrap.addEventListener('focusout', ()=>{
+    requestAnimationFrame(()=>{
+      if(!wrap.contains(document.activeElement)){
+        refreshStatsOnly();
+      }
+    });
+  });
+
+  if(startEditing) showTextEdit(); else showTextView();
   return wrap;
+}
+
+// 轻量刷新：只更新列头的 sum/avg 和每行右侧的总计数字，不重建整个 grid DOM
+function refreshStatsOnly(){
+  const {start,end} = periodRange();
+  const days = allDaysInRange(start,end);
+  document.querySelectorAll('.col-header').forEach(h=>{
+    const colId = h.dataset.colId; if(!colId) return;
+    const stats = columnStats(colId, days);
+    const statsEl = h.querySelector('.ch-stats');
+    if(statsEl) statsEl.innerHTML =
+      `<span>Σ <b>${stats.sum.toFixed(2)}</b></span><span>x̄ <b>${stats.avg.toFixed(2)}</b></span>`;
+  });
+  document.querySelectorAll('.row-label').forEach(rl=>{
+    const dKey = rl.dataset.dayKey; if(!dKey) return;
+    const totalEl = rl.querySelector('.row-total');
+    if(totalEl) totalEl.textContent = dayTotal(dKey).toFixed(1);
+  });
+  document.querySelectorAll('.cell.total-cell').forEach(tc=>{
+    const dKey = tc.dataset.dayKey; if(!dKey) return;
+    tc.textContent = dayTotal(dKey).toFixed(2);
+  });
 }
 
 /* =========================================================
@@ -596,6 +674,55 @@ function render(){
   renderGrid();
   renderMobileList();
 }
+
+/* =========================================================
+   设置弹窗
+========================================================= */
+function openSettings(){
+  const root = document.getElementById('modalRoot');
+  root.innerHTML = `
+    <div class="modal-mask" id="modalMask">
+      <div class="modal">
+        <h3>设置</h3>
+        <div class="row"><button id="stExport">导出 JSON</button></div>
+        <div class="row">
+          <button id="stImport">导入 JSON</button>
+          <input type="file" id="stImportFile" accept="application/json" style="display:none;">
+        </div>
+        <div class="row"><button id="stReset" style="color:var(--danger);border-color:var(--danger);">清空所有数据</button></div>
+        <div class="actions"><button id="stClose">关闭</button></div>
+      </div>
+    </div>`;
+  const mask = document.getElementById('modalMask');
+  mask.onclick = e=>{ if(e.target===mask) closeSettings(); };
+  document.getElementById('stClose').onclick = closeSettings;
+  document.getElementById('stExport').onclick = ()=>{
+    const blob = new Blob([JSON.stringify(STATE.data,null,2)],{type:'application/json'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `scfp-export-${todayKey()}.json`;
+    a.click();
+  };
+  document.getElementById('stImport').onclick = ()=>document.getElementById('stImportFile').click();
+  document.getElementById('stImportFile').onchange = e=>{
+    const file = e.target.files[0]; if(!file) return;
+    const reader = new FileReader();
+    reader.onload = ()=>{
+      try{
+        const data = JSON.parse(reader.result);
+        STATE.data = data; saveData(); closeSettings(); render();
+      }catch(err){ alert('导入失败：文件格式不正确'); }
+    };
+    reader.readAsText(file);
+  };
+  document.getElementById('stReset').onclick = ()=>{
+    if(confirm('确定要清空所有数据吗？此操作不可撤销。')){
+      STATE.data = defaultData(); saveData(); closeSettings(); render();
+    }
+  };
+}
+function closeSettings(){ document.getElementById('modalRoot').innerHTML=''; }
+document.getElementById('btnSettings').onclick = openSettings;
 
 document.getElementById('btnPrev').onclick = ()=>stepPeriod(-1);
 document.getElementById('btnNext').onclick = ()=>stepPeriod(1);
